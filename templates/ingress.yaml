@@ -1,0 +1,31 @@
+{{- if .Values.aceSimulation.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "flex-backend-chart.fullname" . }}-aces-simulation
+  annotations:
+    {{- toYaml .Values.aceSimulation.ingress.annotations | nindent 4 }}
+spec:
+  rules:
+    {{- range .Values.aceSimulation.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ssl-redirect
+                port:
+                  name: use-annotation
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "flex-backend-chart.fullname" $ }}-aces-simulation
+                port:
+                  number: {{ $.Values.aceSimulation.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

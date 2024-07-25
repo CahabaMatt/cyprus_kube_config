@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "flex-backend-chart.fullname" . }}-aces-simulation
+  labels:
+    {{- include "flex-backend-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.aceSimulation.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "flex-backend-chart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: aces-simulation
+  template:
+    metadata:
+      labels:
+        {{- include "flex-backend-chart.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: aces-simulation
+    spec:
+      nodeSelector:
+        {{- toYaml .Values.aceSimulation.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.aceSimulation.tolerations | nindent 8 }}
+      containers:
+        - name: aces-simulation
+          image: "{{ .Values.aceSimulation.image.repository }}:{{ .Values.aceSimulation.image.tag }}"
+          imagePullPolicy: {{ .Values.aceSimulation.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            {{- toYaml .Values.aceSimulation.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "flex-backend-chart.fullname" . }}-aces-simulation
+  labels:
+    {{- include "flex-backend-chart.labels" . | nindent 4 }}
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: {{ .Values.aceSimulation.acmCertificateArn }}
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS-1-2-2017-01"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+    - port: 443
+      targetPort: 8000
+      protocol: TCP
+      name: https
+  selector:
+    {{- include "flex-backend-chart.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: aces-simulation

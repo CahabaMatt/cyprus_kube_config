@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "flex-backend-chart.fullname" . }}-aces-simulation
+  labels:
+    {{- include "flex-backend-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: aces-simulation
+spec:
+  replicas: {{ .Values.aceSimulation.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "flex-backend-chart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: aces-simulation
+  template:
+    metadata:
+      labels:
+        {{- include "flex-backend-chart.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: aces-simulation
+    spec:
+      containers:
+        - name: aces-simulation
+          image: "{{ .Values.aceSimulation.image.repository }}:{{ .Values.aceSimulation.image.tag }}"
+          imagePullPolicy: {{ .Values.aceSimulation.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.aceSimulation.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.aceSimulation.resources | nindent 12 }}
+      {{- with .Values.aceSimulation.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.aceSimulation.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
