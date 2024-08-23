@@ -107,14 +107,6 @@ tolerations: []
 affinity: {}
 
 
-aiService:
-  image:
-    repository: 339712977225.dkr.ecr.us-east-1.amazonaws.com/ai-services
-    tag: "latest"
-  service:
-    type: LoadBalancer
-    port: 8000
-
 nodeApp:
   image:
     repository: 339712977225.dkr.ecr.us-east-1.amazonaws.com/node-app
@@ -175,4 +167,35 @@ aceSimulation:
         paths:
           - path: /
             pathType: Prefix
+
+aiService:
+  image:
+    repository: 339712977225.dkr.ecr.us-east-1.amazonaws.com/ai-services
+    tag: "latest"
+    pullPolicy: Always
+  service:
+    type: LoadBalancer
+    port: 8000
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+    hosts:
+      - host: ai-services.yourdomain.com
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+      cpu: "7"
+      memory: 28Gi
+    requests:
+      nvidia.com/gpu: 1
+      cpu: "7"
+      memory: 28Gi
+  nodeSelector:
+    eks.amazonaws.com/nodegroup: gpu-group
 
