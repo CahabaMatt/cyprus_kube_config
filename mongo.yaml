@@ -1,0 +1,17 @@
+architecture: standalone
+replicaCount: 1
+auth:
+  rootPassword: root
+  username: admin
+  password: pass
+  database: thedb
+persistence:
+  enabled: true
+  storageClass: "ebs-sc"
+  size: 100Gi
+volumePermissions:
+  enabled: true
+ingress:
+  hosts:
+    - name: mongodb.local
+      path: /

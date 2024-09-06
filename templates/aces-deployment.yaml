@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "flex-backend-chart.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.aceSimulation.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "flex-backend-chart.selectorLabels" . | nindent 6 }}

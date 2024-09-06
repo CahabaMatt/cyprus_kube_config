@@ -55,10 +55,21 @@ ingress:
         - path: /
           pathType: ImplementationSpecific
   tls: []
-
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
 
 resources: {}
-
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
 livenessProbe:
   httpGet:
@@ -76,8 +87,50 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-#
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
 
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+nodeApp:
+  image:
+    repository: 339712977225.dkr.ecr.us-east-1.amazonaws.com/node-app
+    tag: "latest"
+  service:
+    type: LoadBalancer
+    port: 3000
+
+
+mongodb:
+  architecture: standalone
+  auth:
+    rootPassword: root
+    username: admin
+    password: pass
+    database: thedb
+  persistence:
+    enabled: true
+    existingClaim: ""
+    storageClass: "ebs-sc"  # Change this to the EBS CSI storage class
+    size: 100Gi
+    volumeName: mongodb-pv
+  volumePermissions:
+    enabled: true
 
 
 aceSimulation:
@@ -86,16 +139,17 @@ aceSimulation:
     tag: gpu-v1
     pullPolicy: Always
   acmCertificateArn: "arn:aws:acm:us-east-1:339712977225:certificate/8897e1fb-349c-4b1e-bbf5-cf3151d05f7f"
+  replicaCount: 1
   service:
     type: LoadBalancer
     port: 8000
   resources:
-    requests:
-      cpu: "6"
-      memory: "12Gi"
     limits:
       cpu: "6"
-      memory: "12Gi"
+      memory: 14Gi
+    requests:
+      cpu: "6"
+      memory: 14Gi
   nodeSelector:
     eks.amazonaws.com/nodegroup: cpu-node-group
   tolerations: []  # Keep this empty array if you don't need any tolerations
@@ -114,39 +168,6 @@ aceSimulation:
           - path: /
             pathType: Prefix
 
-llmService:
-  image:
-    repository: 339712977225.dkr.ecr.us-east-1.amazonaws.com/llm_service
-    tag: "latest"
-    pullPolicy: Always
-  replicaCount: 1
-  service:
-    type: LoadBalancer
-    port: 11434
-  ingress:
-    enabled: true
-    annotations:
-      kubernetes.io/ingress.class: alb
-      alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/target-type: ip
-    hosts:
-      - host: llm-services.local
-        paths:
-          - path: /
-            pathType: Prefix
-  resources:
-    limits:
-      nvidia.com/gpu: 1
-      cpu: "3"
-      memory: 14Gi
-    requests:
-      nvidia.com/gpu: 1
-      cpu: "3"
-      memory: 14Gi
-  nodeSelector:
-    eks.amazonaws.com/nodegroup: gpu-node
-
-
 aiService:
   image:
     repository: 339712977225.dkr.ecr.us-east-1.amazonaws.com/ai-services
@@ -162,13 +183,19 @@ aiService:
       alb.ingress.kubernetes.io/scheme: internet-facing
       alb.ingress.kubernetes.io/target-type: ip
     hosts:
-      - host: ai-services.internal
+      - host: ai-services.yourdomain.com
         paths:
           - path: /
             pathType: Prefix
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+      cpu: "7"
+      memory: 28Gi
+    requests:
+      nvidia.com/gpu: 1
+      cpu: "7"
+      memory: 28Gi
   nodeSelector:
-    eks.amazonaws.com/nodegroup: database-api-node-group
-
-
-
+    eks.amazonaws.com/nodegroup: gpu-group
 

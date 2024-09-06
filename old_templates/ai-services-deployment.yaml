@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "flex-backend-chart.fullname" . }}-ai-services
+  labels:
+    {{- include "flex-backend-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ai-services
+spec:
+  replicas: {{ .Values.aiService.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "flex-backend-chart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ai-services
+  template:
+    metadata:
+      labels:
+        {{- include "flex-backend-chart.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ai-services
+    spec:
+      nodeSelector:
+        {{- toYaml .Values.aiService.nodeSelector | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-ai-services
+          image: "{{ .Values.aiService.image.repository }}:{{ .Values.aiService.image.tag }}"
+          imagePullPolicy: {{ .Values.aiService.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+          resources:
+            {{- toYaml .Values.aiService.resources | nindent 12 }}

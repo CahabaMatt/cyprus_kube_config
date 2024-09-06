@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+# comment
+metadata:
+  name: {{ include "flex-backend-chart.fullname" . }}-llm-services
+  labels:
+    {{- include "flex-backend-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: llm-services
+spec:
+  replicas: {{ .Values.llmService.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "flex-backend-chart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: llm-services
+  template:
+    metadata:
+      labels:
+        {{- include "flex-backend-chart.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: llm-services
+    spec:
+      nodeSelector:
+        {{- toYaml .Values.llmService.nodeSelector | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-llm-services
+          image: "{{ .Values.llmService.image.repository }}:{{ .Values.llmService.image.tag }}"
+          imagePullPolicy: {{ .Values.llmService.image.pullPolicy }}
+          ports:
+            - containerPort: 11434
+          resources:
+            {{- toYaml .Values.llmService.resources | nindent 12 }}
